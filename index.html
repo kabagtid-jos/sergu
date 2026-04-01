@@ -7,7 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/ZR3SBpkV/Logo-Pondok-Baru-2023.png">
+  <link rel="apple-touch-icon" href="https://i.ibb.co.com/23hWML9L/Chat-GPT-Image-Apr-2-2026-12-52-31-AM.png">
+  <link rel="icon" type="image/png" href="https://i.ibb.co.com/23hWML9L/Chat-GPT-Image-Apr-2-2026-12-52-31-AM.png">
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU2VyZ3UgUDJTIEFidSBaYWlyaSIsInNob3J0X25hbWUiOiJTZXJndSBQMlMiLCJkZXNjcmlwdGlvbiI6Ikt1bXB1bGFuIFNlcnRpZmlrYXQgUGVsYXRpaGFuIEd1cnUiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBmMTcyYSIsInRoZW1lX2NvbG9yIjoiIzBmMTcyYSIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2kuaWJiLmNvLmNvbS8yM2hXTUw5TC9DaGF0LUdQVC1JbWFnZS1BcHItMi0yMDI2LTEyLTUyLTMxLUFNLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmciLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==">
   
   <title>Sergu P2S Abu Zairi</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -344,6 +346,25 @@
         .then(r=>{ closeModal('participantsModal'); document.getElementById('saveParticipantsBtn').innerText="Simpan Distribusi"; if(r.success){showToast("Distribusi Tersimpan");loadAdminData();} else showToast(r.message,"error"); })
         .catch(e => { document.getElementById('saveParticipantsBtn').innerText="Simpan Distribusi"; showToast("Error", "error"); }); 
     }
+
+    // === PWA SYSTEM LOGIC ===
+    window.addEventListener('load', () => {
+      if ('serviceWorker' in navigator) {
+        // Mendaftarkan service worker kosong menggunakan blob untuk memicu syarat PWA Browser
+        const swCode = "self.addEventListener('fetch', ()=>{} );";
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.warn('PWA Ready'));
+      }
+    });
+    
+    // Mendeteksi apakah perangkat mendukung "Add to Home Screen"
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); 
+      deferredPrompt = e;
+      // Memunculkan Toast Pemberitahuan bahwa aplikasi ini bisa di-install
+      setTimeout(() => showToast("Aplikasi bisa di-install! Gunakan menu browser.", "success"), 3000);
+    });
   </script>
 </body>
 </html>
