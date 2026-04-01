@@ -261,14 +261,28 @@
           const authRes = results[0];
           
           if(authRes.success) { 
-            showToast("Otentikasi Berhasil!"); currentUser = authRes.data; 
-            if (authRes.isAdmin) { adminTeachers = results[1].teachers || []; adminCerts = results[1].certs || []; initAdminFast(results[2] || []); } 
-            else { certificatesData = results[1] || { personal: [] }; initGuruFast(); }
-          } else { showToast(authRes.message, "error"); }
+            showToast("Otentikasi Berhasil!"); 
+            currentUser = authRes.data; 
+            
+            if (authRes.isAdmin) { 
+              adminTeachers = results[1].teachers || []; 
+              adminCerts = results[1].certs || []; 
+              initAdminFast(results[2] || []); 
+            } else { 
+              certificatesData = results[1] || { personal: [] }; 
+              initGuruFast(); 
+            }
+          } else { 
+            showToast(authRes.message, "error"); 
+          }
         })
         .catch(err => { btnText.innerText = "Masuk Portal"; loader.classList.add('hidden'); showToast("Koneksi Server Sibuk.", "error"); });
     }
-    function logout() { currentUser = null; document.getElementById('niy').value=''; showView('loginView'); }
+    
+    function logout() { 
+      currentUser = null; document.getElementById('niy').value=''; 
+      showView('loginView'); 
+    }
 
     // GURU FAST RENDER
     function initGuruFast() {
@@ -313,7 +327,6 @@
     function initAdminFast(logsData) { 
       updateDarkModeUI(); showView('adminDashboardView'); document.getElementById('adminDataLoader').classList.add('hidden');
       
-      // Render Cert List (Cards Baru)
       document.getElementById('adminCertList').innerHTML = adminCerts.map(c => {
         const pCount = c.niyPemilik ? c.niyPemilik.split(',').filter(x=>x).length : 0;
         return `
@@ -340,7 +353,6 @@
         </div>`;
       }).join(''); 
       
-      // Render Global Logs (Timeline Baru)
       const c = document.getElementById('globalLogsContainer'); 
       if(logsData.length===0) { c.innerHTML='<p class="text-center text-xs text-slate-400 py-4">Sistem belum mencatat aktivitas.</p>'; }
       else { 
@@ -356,7 +368,6 @@
       }
     }
     
-    // Fungsi Refresh Manual
     function loadAdminData() { 
       document.getElementById('adminDataLoader').classList.remove('hidden'); document.getElementById('adminCertList').innerHTML=''; 
       Promise.all([ callApi('getAdminData', {}), callApi('getGlobalLogs', {}) ])
@@ -399,7 +410,10 @@
     }
 
     // PWA SYSTEM
-    window.addEventListener('load', () => { if ('serviceWorker' in navigator) { const swCode = "self.addEventListener('fetch', ()=>{} );"; const blob = new Blob([swCode], { type: 'application/javascript' }); navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.warn('PWA Ready')); } });
+    window.addEventListener('load', () => { 
+      if ('serviceWorker' in navigator) { const swCode = "self.addEventListener('fetch', ()=>{} );"; const blob = new Blob([swCode], { type: 'application/javascript' }); navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.warn('PWA Ready')); } 
+    });
+    
     let deferredPrompt; window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; setTimeout(() => showToast("Aplikasi bisa di-install! Cek menu browser.", "success"), 3000); });
   </script>
 </body>
