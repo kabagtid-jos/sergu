@@ -12,7 +12,11 @@
   <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU2VyZ3UgUDJTIEFidSBaYWlyaSIsInNob3J0X25hbWUiOiJTZXJndSBQMlMiLCJkZXNjcmlwdGlvbiI6Ikt1bXB1bGFuIFNlcnRpZmlrYXQgUGVsYXRpaGFuIEd1cnUiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBmMTcyYSIsInRoZW1lX2NvbG9yIjoiIzBmMTcyYSIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2kuaWJiLmNvLmNvbS8yM2hXTUw5TC9DaGF0LUdQVC1JbWFnZS1BcHItMi0yMDI2LTEyLTUyLTMxLUFNLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmciLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==">
   
   <title>Sergu P2S Abu Zairi</title>
+  
+  <!-- Tailwind & Chart.js -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <script>
     tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], serif: ['"Lora"', 'serif'] }, colors: { premium: { dark: '#0f172a', light: '#f8fafc', gold: '#d97706', goldlight: '#f59e0b' } } } } }
   </script>
@@ -131,7 +135,7 @@
     <main class="max-w-md mx-auto px-4 py-6 pb-24">
       
       <!-- Premium Admin Banner -->
-      <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-6 text-white shadow-2xl mb-8 relative overflow-hidden border border-slate-700/50">
+      <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-6 text-white shadow-2xl mb-6 relative overflow-hidden border border-slate-700/50">
         <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
         <div class="relative z-10">
           <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1"><i class="fa-solid fa-satellite-dish mr-1"></i> Mode Sistem</p>
@@ -139,6 +143,18 @@
           <p class="text-xs text-slate-400 leading-relaxed max-w-[85%] font-medium">Kelola hak akses guru, cetak dokumen, dan pantau arus distribusi secara real-time.</p>
         </div>
         <i class="fa-solid fa-chess-knight absolute -right-2 -bottom-2 text-7xl text-slate-700/30 transform -rotate-12"></i>
+      </div>
+
+      <!-- FITUR BARU: DASHBOARD ANALYTICS (CHART.JS) -->
+      <div class="grid grid-cols-2 gap-3 mb-8">
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 dark:border-slate-700">
+          <h4 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-widest text-center">Trend Cetak</h4>
+          <div class="h-28 w-full relative"><canvas id="activityChart"></canvas></div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 dark:border-slate-700">
+          <h4 class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-widest text-center">Status Guru</h4>
+          <div class="h-28 w-full relative flex items-center justify-center"><canvas id="teacherChart"></canvas></div>
+        </div>
       </div>
 
       <!-- 3D Quick Actions -->
@@ -168,7 +184,12 @@
 
       <div class="mb-5 flex justify-between items-end border-b border-slate-200 dark:border-slate-800 pb-3">
          <h3 class="text-sm font-bold text-slate-800 dark:text-white font-serif flex items-center"><i class="fa-solid fa-layer-group mr-2 text-amber-500 text-xs"></i> Manajemen Distribusi</h3>
-         <button onclick="loadAdminData()" class="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md hover:bg-blue-100 transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i> Segarkan</button>
+         
+         <!-- FITUR BARU: TOMBOL EXPORT LAPORAN -->
+         <div class="flex gap-2">
+           <button onclick="exportReportCSV()" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
+           <button onclick="loadAdminData()" class="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1.5 rounded-lg hover:bg-blue-100 transition-colors shadow-sm"><i class="fa-solid fa-rotate-right mr-1"></i> Refresh</button>
+         </div>
       </div>
 
       <div id="adminDataLoader" class="flex flex-col items-center justify-center py-10 hidden"><div class="loader mb-4 border-slate-500"></div></div>
@@ -215,13 +236,23 @@
     }
 
     let currentUser = null; let certificatesData = { personal: [] }; let isAdminMode = false; let adminCerts = []; let adminTeachers = []; let currentEditCertId = null; let currentTargetEmailCert = null;
+    let activityChartInst = null; let teacherChartInst = null; let adminLogsRaw = [];
 
     // UTILS & TOAST
     function showView(v) { document.querySelectorAll('.view-container').forEach(e => { e.classList.remove('view-active'); e.classList.add('view-hidden'); }); document.getElementById(v).classList.remove('view-hidden'); document.getElementById(v).classList.add('view-active'); }
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('sergu_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); updateDarkModeUI(); }
+    
+    function toggleDarkMode() { 
+      document.documentElement.classList.toggle('dark'); 
+      localStorage.setItem('sergu_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); 
+      updateDarkModeUI(); 
+      // Update warna Chart.js jika mode admin aktif
+      if(isAdminMode && adminLogsRaw.length >= 0) renderAdminCharts(adminLogsRaw);
+    }
+    
     function updateDarkModeUI() { const isDark = document.documentElement.classList.contains('dark'); document.querySelectorAll('.darkModeIcon').forEach(el => el.className = `darkModeIcon fa-solid ${isDark ? 'fa-sun text-amber-400' : 'fa-moon text-slate-500'} text-sm`); }
+    
     function showToast(msg, type='success') {
       const t = document.createElement('div'); const bg = type === 'success' ? 'bg-emerald-500' : 'bg-red-500'; const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
       t.className = `flex items-center px-4 py-3.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] text-white text-xs font-bold transform transition-all duration-300 translate-y-[-20px] opacity-0 ${bg}`;
@@ -243,7 +274,6 @@
       }
     }
     
-    // OPTIMASI: FETCH API SECARA BERSAMAAN (PARALLEL)
     function handleLogin(e) {
       e.preventDefault(); 
       const btnText = document.getElementById('loginBtnText'), loader = document.getElementById('loginLoader');
@@ -267,7 +297,8 @@
             if (authRes.isAdmin) { 
               adminTeachers = results[1].teachers || []; 
               adminCerts = results[1].certs || []; 
-              initAdminFast(results[2] || []); 
+              adminLogsRaw = results[2] || [];
+              initAdminFast(adminLogsRaw); 
             } else { 
               certificatesData = results[1] || { personal: [] }; 
               initGuruFast(); 
@@ -323,6 +354,98 @@
     function renderHistory() { const c = document.getElementById('historyContainer'); let h = JSON.parse(localStorage.getItem(`sergu_hist_${currentUser.niy}`) || '[]'); if(h.length===0){ c.innerHTML='<p class="text-center text-[10px] text-slate-400 py-2">Belum ada riwayat aktivitas.</p>'; return; } c.innerHTML = h.map(i => `<div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl shadow-[0_2px_10px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 flex justify-between items-center"><div class="text-xs font-bold font-serif dark:text-slate-200">${i.cert} <span class="text-[9px] font-sans font-bold text-amber-600 bg-amber-50 dark:bg-slate-700 px-1.5 py-0.5 rounded ml-1 uppercase tracking-wider">${i.act}</span></div><div class="text-[9px] text-slate-400 font-semibold">${i.time}</div></div>`).join(''); }
     function logHistory(id, act) { const cName = (certificatesData.personal.find(c => c.id===id)||{}).nama || id; let h = JSON.parse(localStorage.getItem(`sergu_hist_${currentUser.niy}`) || '[]'); h.unshift({ cert: cName, act: act, time: new Date().toLocaleDateString('id-ID') }); if(h.length>5) h.pop(); localStorage.setItem(`sergu_hist_${currentUser.niy}`, JSON.stringify(h)); renderHistory(); }
 
+    // ========================================================
+    // FITUR BARU: RENDER CHART & EXPORT EXCEL/CSV DI ADMIN
+    // ========================================================
+    
+    function renderAdminCharts(logsData) {
+      // 1. Olah Data untuk Chart Status Guru (Aktif/Pasif)
+      let activeNiySet = new Set();
+      adminCerts.forEach(c => {
+        if (c.niyPemilik) c.niyPemilik.split(',').forEach(niy => activeNiySet.add(niy.trim()));
+      });
+      let activeCount = 0, inactiveCount = 0;
+      adminTeachers.forEach(t => { activeNiySet.has(t.niy) ? activeCount++ : inactiveCount++; });
+
+      // 2. Olah Data untuk Chart Aktivitas Harian (7 Hari Terakhir)
+      let activityMap = {};
+      for(let i=4; i>=0; i--) { // Kita ambil 5 hari agar bar lebih tebal dan cantik
+        let d = new Date(); d.setDate(d.getDate() - i);
+        activityMap[d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})] = 0;
+      }
+      logsData.forEach(l => {
+        let d = new Date(l[0]); let dateStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+        if(activityMap[dateStr] !== undefined) activityMap[dateStr]++;
+      });
+
+      // Deteksi tema untuk warna font grafik
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#cbd5e1' : '#64748b'; // slate-300 / slate-500
+      const gridColor = isDark ? '#334155' : '#f1f5f9'; // slate-700 / slate-100
+
+      // Render Bar Chart (Trend Cetak)
+      if(activityChartInst) activityChartInst.destroy();
+      let ctxAct = document.getElementById('activityChart').getContext('2d');
+      activityChartInst = new Chart(ctxAct, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(activityMap),
+          datasets: [{ data: Object.values(activityMap), backgroundColor: '#3b82f6', borderRadius: 4 }]
+        },
+        options: { 
+          responsive: true, maintainAspectRatio: false, 
+          plugins: { legend: { display: false } }, 
+          scales: { x: { ticks: { color: textColor, font: {size: 9} }, grid: { display: false } }, y: { ticks: { color: textColor, stepSize: 1, font: {size: 9} }, grid: { color: gridColor }, beginAtZero: true } } 
+        }
+      });
+
+      // Render Doughnut Chart (Status Guru)
+      if(teacherChartInst) teacherChartInst.destroy();
+      let ctxTch = document.getElementById('teacherChart').getContext('2d');
+      teacherChartInst = new Chart(ctxTch, {
+        type: 'doughnut',
+        data: {
+          labels: ['Aktif', 'Pasif'],
+          datasets: [{ data: [activeCount, inactiveCount], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 0 }]
+        },
+        options: { 
+          responsive: true, maintainAspectRatio: false, cutout: '65%', 
+          plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 10, family: 'Poppins' }, padding: 10 } } } 
+        }
+      });
+    }
+
+    function exportReportCSV() {
+      if(adminCerts.length === 0) return showToast("Tidak ada data sertifikat.", "error");
+
+      let csvContent = "DATA DISTRIBUSI SERTIFIKAT - P2S ABU ZAIRI\n\n";
+      csvContent += "ID Sertifikat,Nama Pelatihan,NIY Guru,Nama Guru\n";
+
+      adminCerts.forEach(c => {
+        let pemiliks = c.niyPemilik ? c.niyPemilik.split(',').map(n => n.trim()) : [];
+        if(pemiliks.length === 0) {
+          csvContent += `"${c.id}","${c.nama}","Belum Ada","Belum Ada"\n`;
+        } else {
+          pemiliks.forEach(niy => {
+            let teacher = adminTeachers.find(t => t.niy === niy);
+            let tName = teacher ? teacher.nama : "Guru Tidak Ditemukan";
+            csvContent += `"${c.id}","${c.nama}","${niy}","${tName}"\n`;
+          });
+        }
+      });
+
+      let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      let link = document.createElement("a");
+      let url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Laporan_Sergu_${new Date().toLocaleDateString('id-ID').replace(/\//g,'-')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Laporan Excel/CSV Berhasil Diunduh!", "success");
+    }
+
     // ADMIN FAST RENDER DENGAN UI BARU
     function initAdminFast(logsData) { 
       updateDarkModeUI(); showView('adminDashboardView'); document.getElementById('adminDataLoader').classList.add('hidden');
@@ -366,12 +489,19 @@
           </div>`;
         }).join('');
       }
+
+      // Panggil fungsi render grafik Chart.js
+      renderAdminCharts(logsData);
     }
     
     function loadAdminData() { 
       document.getElementById('adminDataLoader').classList.remove('hidden'); document.getElementById('adminCertList').innerHTML=''; 
       Promise.all([ callApi('getAdminData', {}), callApi('getGlobalLogs', {}) ])
-        .then(results => { adminTeachers = results[0].teachers; adminCerts = results[0].certs; initAdminFast(results[1]); })
+        .then(results => { 
+          adminTeachers = results[0].teachers; adminCerts = results[0].certs; 
+          adminLogsRaw = results[1];
+          initAdminFast(adminLogsRaw); 
+        })
         .catch(err => { document.getElementById('adminDataLoader').classList.add('hidden'); showToast("Gagal menyegarkan data.", "error"); });
     }
     
