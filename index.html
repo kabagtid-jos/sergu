@@ -12,10 +12,10 @@
   <title>Sergu P2S Abu Zairi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], serif: ['"Cinzel"', 'serif'] }, colors: { premium: { dark: '#0f172a', light: '#f8fafc', gold: '#d97706', goldlight: '#f59e0b' } } } } }
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'], serif: ['"Lora"', 'serif'] }, colors: { premium: { dark: '#0f172a', light: '#f8fafc', gold: '#d97706', goldlight: '#f59e0b' } } } } }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <style>
     body { background-color: #f8fafc; overflow-x: hidden; }
@@ -31,13 +31,8 @@
     
     /* Menghilangkan panah (spinner) pada input number */
     input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type="number"] {
-      -moz-appearance: textfield;
-    }
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
   </style>
   <script> if (localStorage.getItem('sergu_theme') === 'dark' || (!('sergu_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); } </script>
 </head>
@@ -149,32 +144,19 @@
 
   <!-- SCRIPT API CLIENT UNTUK VERCEL / GITHUB PAGES -->
   <script>
-    // =========================================================================
-    // WAJIB DIISI: MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI
-    // =========================================================================
     const GAS_URL = "https://script.google.com/macros/s/AKfycbygjjx9liWABMA1JqNuBxSs95lzzTjaRpARGxOaSQb_MDKDK4nZ0qUhS2TXsr_6BLV8SQ/exec"; 
     
     // API Call Wrapper menggunakan Fetch
     async function callApi(action, params = {}) {
-      if (GAS_URL === "ISI_URL_WEB_APP_ANDA_DISINI") {
-        alert("Peringatan: Anda belum memasukkan URL Google Apps Script di file index.html baris 219.");
-        return Promise.reject("URL GAS belum dikonfigurasi.");
-      }
-      
       try {
         const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Menghindari isu preflight CORS
-          body: JSON.stringify({ action: action, params: params }),
-          redirect: 'follow'
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: action, params: params }), redirect: 'follow'
         });
         const data = await response.json();
         if (data.status === 'error') throw new Error(data.message);
         return data.result;
-      } catch (error) {
-        console.error("API Error:", error);
-        throw error;
-      }
+      } catch (error) { throw error; }
     }
 
     let currentUser = null; let certificatesData = { personal: [] }; let isAdminMode = false; let adminCerts = []; let adminTeachers = []; let currentEditCertId = null; let currentTargetEmailCert = null;
@@ -197,49 +179,69 @@
     function toggleAdminLogin() {
       isAdminMode = !isAdminMode; 
       const lbl = document.getElementById('loginLabel'), inp = document.getElementById('niy'), icn = document.getElementById('loginIcon'), btn = document.getElementById('toggleRoleBtn');
-      
       if(isAdminMode) { 
         lbl.innerHTML = '<span class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-6 h-6 rounded flex items-center justify-center mr-2 shadow-sm transition-colors"><i class="fa-solid fa-key text-[11px]"></i></span> Kunci Keamanan'; 
-        inp.type = "password"; 
-        inp.placeholder = "Masukkan PIN Admin..."; 
-        icn.className = "fa-solid fa-key text-lg transition-transform group-focus-within:scale-110"; 
-        btn.innerHTML = '<i class="fa-solid fa-user-graduate mr-2"></i> Kembali ke Mode Guru'; 
+        inp.type = "password"; inp.placeholder = "Masukkan PIN Admin..."; icn.className = "fa-solid fa-key text-lg transition-transform group-focus-within:scale-110"; btn.innerHTML = '<i class="fa-solid fa-user-graduate mr-2"></i> Kembali ke Mode Guru'; 
       } else { 
         lbl.innerHTML = '<span class="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 w-6 h-6 rounded flex items-center justify-center mr-2 shadow-sm transition-colors"><i class="fa-solid fa-fingerprint text-[11px]"></i></span> Identitas Akses'; 
-        inp.type = "number"; 
-        inp.placeholder = "Masukkan NIY"; 
-        icn.className = "fa-solid fa-id-card text-lg transition-transform group-focus-within:scale-110"; 
-        btn.innerHTML = '<i class="fa-solid fa-user-shield mr-2"></i> Akses Panel Eksekutif'; 
+        inp.type = "number"; inp.placeholder = "Masukkan NIY"; icn.className = "fa-solid fa-id-card text-lg transition-transform group-focus-within:scale-110"; btn.innerHTML = '<i class="fa-solid fa-user-shield mr-2"></i> Akses Panel Eksekutif'; 
       }
     }
     
+    // OPTIMASI: FETCH API SECARA BERSAMAAN (PARALLEL)
     function handleLogin(e) {
-      e.preventDefault(); const btnText = document.getElementById('loginBtnText'), loader = document.getElementById('loginLoader');
-      btnText.innerText = "Memproses..."; loader.classList.remove('hidden');
+      e.preventDefault(); 
+      const btnText = document.getElementById('loginBtnText'), loader = document.getElementById('loginLoader');
+      btnText.innerText = "Otentikasi..."; loader.classList.remove('hidden');
       
-      callApi('authUser', { niyInput: document.getElementById('niy').value, isAdminMode: isAdminMode })
-        .then(res => {
+      const inputVal = document.getElementById('niy').value;
+      
+      // Siapkan antrean API untuk dipanggil bebarengan
+      let apiPromises = [ callApi('authUser', { niyInput: inputVal, isAdminMode: isAdminMode }) ];
+      
+      if (isAdminMode) {
+        apiPromises.push(callApi('getAdminData', {}));
+        apiPromises.push(callApi('getGlobalLogs', {}));
+      } else {
+        apiPromises.push(callApi('getDataSertifikat', { niy: inputVal }));
+      }
+
+      // Jalankan semua sekaligus
+      Promise.all(apiPromises)
+        .then(results => {
           btnText.innerText = "Masuk Portal"; loader.classList.add('hidden');
-          if(res.success) { showToast("Login Berhasil!"); currentUser = res.data; res.isAdmin ? initAdmin() : initGuru(); } else showToast(res.message, "error");
+          const authRes = results[0];
+          
+          if(authRes.success) { 
+            showToast("Login Berhasil!"); 
+            currentUser = authRes.data; 
+            
+            // Bypass loading screen jika berhasil
+            if (authRes.isAdmin) {
+               adminTeachers = results[1].teachers || [];
+               adminCerts = results[1].certs || [];
+               initAdminFast(results[2] || []);
+            } else {
+               certificatesData = results[1] || { personal: [] };
+               initGuruFast();
+            }
+          } else { 
+            showToast(authRes.message, "error"); 
+          }
         })
         .catch(err => {
-          btnText.innerText = "Masuk Portal"; loader.classList.add('hidden'); showToast("Koneksi Gagal: Pastikan URL GAS benar.", "error");
+          btnText.innerText = "Masuk Portal"; loader.classList.add('hidden'); showToast("Koneksi Server Sibuk.", "error");
         });
     }
     function logout() { currentUser = null; document.getElementById('niy').value=''; showView('loginView'); }
 
-    // GURU
-    function initGuru() {
+    // GURU FAST RENDER
+    function initGuruFast() {
       document.getElementById('userNameDisplay').innerText = currentUser.nama; document.getElementById('userNiyDisplay').innerText = `NIY: ${currentUser.niy}`; updateDarkModeUI(); renderHistory(); showView('dashboardView');
-      document.getElementById('dataLoader').classList.remove('hidden'); document.getElementById('contentPersonal').innerHTML = '';
+      document.getElementById('dataLoader').classList.add('hidden');
       
-      callApi('getDataSertifikat', { niy: currentUser.niy })
-        .then(data => {
-          document.getElementById('dataLoader').classList.add('hidden'); certificatesData = data;
-          let total = data.personal.length; let level = "Pemula Baru"; if(total >= 2) level = "Pendidik Aktif"; if(total >= 5) level = "Master Guru";
-          document.getElementById('guruTotalCerts').innerText = total; document.getElementById('guruLevel').innerText = level; renderCertificates();
-        })
-        .catch(err => { document.getElementById('dataLoader').classList.add('hidden'); showToast("Gagal memuat sertifikat", "error"); });
+      let total = certificatesData.personal.length; let level = "Pemula Baru"; if(total >= 2) level = "Pendidik Aktif"; if(total >= 5) level = "Master Guru";
+      document.getElementById('guruTotalCerts').innerText = total; document.getElementById('guruLevel').innerText = level; renderCertificates();
     }
     
     function renderCertificates(term = '') {
@@ -274,16 +276,24 @@
     function renderHistory() { const c = document.getElementById('historyContainer'); let h = JSON.parse(localStorage.getItem(`sergu_hist_${currentUser.niy}`) || '[]'); if(h.length===0){ c.innerHTML='<p class="text-center text-[10px] text-slate-400">Belum ada aktivitas</p>'; return; } c.innerHTML = h.map(i => `<div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex justify-between items-center"><div class="text-xs font-bold font-serif dark:text-slate-200">${i.cert} <span class="text-[9px] font-sans font-normal text-amber-500 bg-amber-50 dark:bg-slate-700 px-1 rounded ml-1">${i.act}</span></div><div class="text-[9px] text-slate-400">${i.time}</div></div>`).join(''); }
     function logHistory(id, act) { const cName = (certificatesData.personal.find(c => c.id===id)||{}).nama || id; let h = JSON.parse(localStorage.getItem(`sergu_hist_${currentUser.niy}`) || '[]'); h.unshift({ cert: cName, act: act, time: new Date().toLocaleDateString('id-ID') }); if(h.length>5) h.pop(); localStorage.setItem(`sergu_hist_${currentUser.niy}`, JSON.stringify(h)); renderHistory(); }
 
-    // ADMIN
-    function initAdmin() { updateDarkModeUI(); showView('adminDashboardView'); loadAdminData(); }
+    // ADMIN FAST RENDER
+    function initAdminFast(logsData) { 
+      updateDarkModeUI(); showView('adminDashboardView'); document.getElementById('adminDataLoader').classList.add('hidden');
+      document.getElementById('adminCertList').innerHTML = adminCerts.map(c => `<div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 mb-3 flex justify-between items-center"><div><h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">${c.nama}</h4><p class="text-[10px] text-slate-400 mt-1">${c.id}</p></div><button onclick="openParticipantsModal('${c.id}')" class="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-xs font-bold rounded-xl"><i class="fa-solid fa-users mr-1"></i> ${(c.niyPemilik?c.niyPemilik.split(',').filter(x=>x).length:0)}</button></div>`).join(''); 
+      const c = document.getElementById('globalLogsContainer'); if(logsData.length===0) c.innerHTML='<p class="text-center text-xs text-slate-400 py-4">Belum ada aktivitas terekam.</p>'; else c.innerHTML = logsData.reverse().slice(0, 15).map(l => `<div class="border-b dark:border-slate-700 pb-2 mb-2 last:border-0"><p class="text-[10px] text-slate-400">${new Date(l[0]).toLocaleString('id-ID')}</p><p class="text-xs font-bold dark:text-slate-200">${l[1]} <span class="font-normal text-slate-500">melakukan</span> <span class="text-blue-500">${l[3] || l[2]}</span></p></div>`).join('');
+    }
     
+    // Fungsi ini tetap dipertahankan untuk tombol "Refresh Data"
     function loadAdminData() { 
       document.getElementById('adminDataLoader').classList.remove('hidden'); document.getElementById('adminCertList').innerHTML=''; 
       callApi('getAdminData', {})
         .then(d => { 
           document.getElementById('adminDataLoader').classList.add('hidden'); adminTeachers = d.teachers; adminCerts = d.certs; 
           document.getElementById('adminCertList').innerHTML = adminCerts.map(c => `<div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 mb-3 flex justify-between items-center"><div><h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">${c.nama}</h4><p class="text-[10px] text-slate-400 mt-1">${c.id}</p></div><button onclick="openParticipantsModal('${c.id}')" class="px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-xs font-bold rounded-xl"><i class="fa-solid fa-users mr-1"></i> ${(c.niyPemilik?c.niyPemilik.split(',').filter(x=>x).length:0)}</button></div>`).join(''); 
-          loadGlobalLogs(); 
+          
+          callApi('getGlobalLogs', {}).then(logs => {
+             const c = document.getElementById('globalLogsContainer'); if(logs.length===0) c.innerHTML='<p class="text-center text-xs text-slate-400 py-4">Belum ada aktivitas terekam.</p>'; else c.innerHTML = logs.reverse().slice(0, 15).map(l => `<div class="border-b dark:border-slate-700 pb-2 mb-2 last:border-0"><p class="text-[10px] text-slate-400">${new Date(l[0]).toLocaleString('id-ID')}</p><p class="text-xs font-bold dark:text-slate-200">${l[1]} <span class="font-normal text-slate-500">melakukan</span> <span class="text-blue-500">${l[3] || l[2]}</span></p></div>`).join('');
+          });
         })
         .catch(err => { document.getElementById('adminDataLoader').classList.add('hidden'); showToast("Gagal memuat data admin", "error"); });
     }
@@ -326,12 +336,6 @@
       callApi('saveCertificateParticipants', { certId: currentEditCertId, niyString: selected })
         .then(r=>{ closeModal('participantsModal'); document.getElementById('saveParticipantsBtn').innerText="Simpan Distribusi"; if(r.success){showToast("Distribusi Tersimpan");loadAdminData();} else showToast(r.message,"error"); })
         .catch(e => { document.getElementById('saveParticipantsBtn').innerText="Simpan Distribusi"; showToast("Error", "error"); }); 
-    }
-    
-    function loadGlobalLogs() { 
-      callApi('getGlobalLogs', {})
-        .then(logs => { const c = document.getElementById('globalLogsContainer'); if(logs.length===0) c.innerHTML='<p class="text-center text-xs text-slate-400 py-4">Belum ada aktivitas terekam.</p>'; else c.innerHTML = logs.reverse().slice(0, 15).map(l => `<div class="border-b dark:border-slate-700 pb-2 mb-2 last:border-0"><p class="text-[10px] text-slate-400">${new Date(l[0]).toLocaleString('id-ID')}</p><p class="text-xs font-bold dark:text-slate-200">${l[1]} <span class="font-normal text-slate-500">melakukan</span> <span class="text-blue-500">${l[3] || l[2]}</span></p></div>`).join(''); })
-        .catch(e => console.error("Gagal muat logs"));
     }
   </script>
 </body>
